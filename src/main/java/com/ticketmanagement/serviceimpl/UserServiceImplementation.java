@@ -4,6 +4,9 @@ import java.util.Date;
 import java.util.List;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import com.ticketmanagement.dto.LoginDto;
@@ -23,6 +26,9 @@ public class UserServiceImplementation implements UserService {
 
 	@Autowired
 	TicketRepository repository;
+	
+	@Autowired
+	private PasswordEncoder bcryptEncoder;
 
 	@Override
 	public UserDto addUser(UserDto userDto) {
@@ -30,7 +36,7 @@ public class UserServiceImplementation implements UserService {
 		user.setFirstName(userDto.getFirstName());
 		user.setLastName(userDto.getLastName());
 		user.setUserEmail(userDto.getUserEmail());
-		user.setUserPassword(userDto.getUserPassword());
+		user.setUserPassword(bcryptEncoder.encode(userDto.getUserPassword()));
 		user.setUserMobileNo(userDto.getUserMobileNo());
 		user.setCreatedDate(new Date());
 
@@ -49,7 +55,7 @@ public class UserServiceImplementation implements UserService {
 		if (ObjectUtils.isEmpty(user)) {
 			throw new ResourceNotFoundException("invalid Email");
 		}
-		if (user.getUserPassword().equalsIgnoreCase(dto.getPassword())) {
+		if (bcryptEncoder.matches(dto.getPassword(),user.getUserPassword())) {
 			List<Tickets> mylist = repository.findAllByUserUserId(user.getUserId());
 			return mylist;
 
